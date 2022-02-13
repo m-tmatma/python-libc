@@ -1,5 +1,8 @@
 import sys
 import time
+import errno
+import pytest
+
 
 from libc import *
 
@@ -35,3 +38,11 @@ def test_eventfd():
 
     c = int.from_bytes(b, byteorder=sys.byteorder)
     assert a == c
+
+    # try to close the timerfd which was already closed.
+    with pytest.raises(OSError) as exc_info:
+        os.close(efd)
+
+    # check detail of OSError
+    assert exc_info.value.args[0] == errno.EBADF
+    assert exc_info.value.args[1] == os.strerror(errno.EBADF)
