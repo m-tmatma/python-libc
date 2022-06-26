@@ -18,9 +18,6 @@ def test_getpid():
     ( 0.125, 0.25, 2 ),
 ])
 def test_timerfd(interval: float, value: float, count: int):
-    # acceptable error is 1 msec or less.
-    limit_error = 1e-3
-
     tfd = timerfd_create(CLOCK.REALTIME, 0)
 
     # 1st call of timerfd_settime
@@ -31,12 +28,12 @@ def test_timerfd(interval: float, value: float, count: int):
     # 2nd call of timerfd_settime
     interval2, value2 = timerfd_settime(tfd, 0, (interval, value))
     assert(interval2 == interval)
-    assert(abs(value2 - value) < limit_error)
+    pytest.approx(value2 , value)
 
     # check by timerfd_gettime
     interval2, value2 = timerfd_gettime(tfd)
     assert(interval2 == interval)
-    assert(abs(value2 - value) < limit_error)
+    pytest.approx(value2 , value)
 
     t = time.perf_counter()
     for _ in range(count):
@@ -44,7 +41,7 @@ def test_timerfd(interval: float, value: float, count: int):
     t = time.perf_counter() - t
 
     total_time = value +  interval * (count - 1)
-    assert(abs(t - total_time) < limit_error)
+    pytest.approx(t, total_time)
 
     # close timerfd
     os.close(tfd)
@@ -63,8 +60,6 @@ def test_timerfd(interval: float, value: float, count: int):
     ( SEC_IN_NS //  10, SEC_IN_NS //20, 2 ),
 ])
 def test_timerfd_ns(interval: int, value: int, count: int):
-    # acceptable error is 1 msec or less.
-    limit_error = SEC_IN_NS // 1000
 
     # check availability of `time.perf_counter_ns()`.
     # If it is not available (expected on python 3.6), define a stub.
@@ -83,12 +78,12 @@ def test_timerfd_ns(interval: int, value: int, count: int):
     # 2nd call of timerfd_settime_ns
     interval2, value2 = timerfd_settime_ns(tfd, 0, (interval, value))
     assert(interval2 == interval)
-    assert(abs(value2 - value) < limit_error)
+    pytest.approx(value2, value)
 
     # check by timerfd_gettime_ns
     interval2, value2 = timerfd_gettime_ns(tfd)
     assert(interval2 == interval)
-    assert(abs(value2 - value) < limit_error)
+    pytest.approx(value2, value)
 
     t = time.perf_counter_ns()
     for _ in range(count):
@@ -96,7 +91,7 @@ def test_timerfd_ns(interval: int, value: int, count: int):
     t = time.perf_counter_ns() - t
 
     total_time = value +  interval * (count - 1)
-    assert(abs(t - total_time) < limit_error)
+    pytest.approx(t, total_time)
 
     # close timerfd
     os.close(tfd)
